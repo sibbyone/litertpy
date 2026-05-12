@@ -1,16 +1,20 @@
 import os
 import time
 import urllib.request
+from pathlib import Path
 
 import cv2
 import numpy as np
 import yaml
 from ai_edge_litert.compiled_model import CompiledModel, HardwareAccelerator
 
+script_dir = Path(__file__).parent.resolve()
+print(f"Skriptverzeichnis: {script_dir}")
 # ── Konfiguration ────────────────────────────────────────────
-MODEL_PATH     = "C:\\Users\\micha\\PycharmProjects\\LiteRT\\assets\\mymodel.tflite"
-IMAGE_PATH     =  "C:\\Users\\micha\\PycharmProjects\\LiteRT\\test.jpg"
-BASE_DIR       = "C:\\Users\\micha\\PycharmProjects\\LiteRT"
+MODEL_PATH     = f"{script_dir}\\assets\\mymodel.tflite"
+IMAGE_PATH     =  f"{script_dir}\\res\\p1.jpg"
+IMAGE_NAME = "p1"
+RESULT_DIR       = f"{script_dir}\\out_file\\"
 INPUT_SIZE     = (320, 320)
 CONF_THRESHOLD = 0.4
 IOU_THRESHOLD  = 0.45
@@ -65,8 +69,11 @@ def decode_output(output, orig_shape):
 
     for pred in predictions:
         objectness = pred[4]
+
         if objectness < CONF_THRESHOLD:
             continue
+        else:
+            print(pred[4])
         class_probs = pred[5:]
         class_id    = np.argmax(class_probs)
         confidence  = objectness * class_probs[class_id]
@@ -102,8 +109,9 @@ def draw_results(img_orig, results):
         cv2.rectangle(img_orig, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(img_orig, label, (x1, y1 - 8),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
-    cv2.imwrite(os.path.join(BASE_DIR, "ergebnis.jpg"), img_orig)
-    print(f"💾 Gespeichert: ergebnis.jpg")
+    result_file = os.path.join(RESULT_DIR, f"{IMAGE_NAME}_result.jpg")
+    cv2.imwrite(result_file, img_orig)
+    print(f"Gespeichert: ergebnis.jpg")
 
 # ── Main ─────────────────────────────────────────────────────
 img, img_orig = preprocess(IMAGE_PATH)
